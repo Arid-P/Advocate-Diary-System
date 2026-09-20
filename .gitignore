@@ -1,8 +1,26 @@
-.agents/
-.claude/
+# Python bytecode and compiled files
+__pycache__/
+*.py[cod]
+
+# Virtual environment (dependencies)
 .venv/
 
-advocate_diary_system_project_spec.md
+# Environment variables and secrets (contains sensitive data)
+.env
+
+# SQLite database directory and files
+database/
+*.db
+*.sqlite3
+
+# Editor and IDE configurations
+.vscode/
+
+# AI agent workspace settings and custom rules
+.agents/
+.claude/
 CLAUDE.md
-uv.py
-uv.lock
+advocate_diary_system_project_spec.md
+
+# Test runner cache (pytest)
+.pytest_cache/

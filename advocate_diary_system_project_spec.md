@@ -1,6 +1,7 @@
 # Project: AdvocateDiarySystem (Rebuild from Scratch)
 
 ## 1. Project Context & Objectives
+
 - **Goal**: Rebuild the AdvocateDiarySystem backend from zero using modern Python patterns.
 - **Tech Stack**: Python 3.12+, FastAPI, SQLAlchemy 2.0 (SQLite), Pydantic v2, `uvicorn`, managed via `uv`.
 - **Primary Domain**: Case tracking, client management, hearing schedules, and legal diary notes.
@@ -60,6 +61,7 @@ advocatediary/
 ```
 
 ### Why This Separation Exists:
+
 - **`models/` vs `schemas/`**:
   - `models/` defines tables and columns as stored inside SQLite using SQLAlchemy ORM.
   - `schemas/` defines data validation and serialization over HTTP using Pydantic. Keeping them distinct prevents unintended exposure of internal database fields and provides strict input validation.
@@ -97,7 +99,3 @@ advocatediary/
    - **Milestone 6**: Connecting routers to `main.py` and testing endpoints through interactive Swagger docs (`/docs`).
 
 ---
-
-## 4. Kickoff Prompt
-
-"I have initialized an empty project with `git` and `uv` using a `src/` layout. Read the rules and file structure above. Let's begin with Milestone 1: Setting up `src/advocatediary/config.py` and `src/advocatediary/database.py`. Explain what components are needed for the SQLite engine and session maker, then tell me what code I need to write first."
