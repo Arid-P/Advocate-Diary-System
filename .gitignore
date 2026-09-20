@@ -1,0 +1,6 @@
+.agents/
+.claude/
+.venv/
+
+claude.md
+uv.py
