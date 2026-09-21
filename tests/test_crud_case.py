@@ -41,7 +41,8 @@ def test_update_case(db_session, test_client):
     created_case = crud_case.create_case(db=db_session, case_in=CaseCreate(title="Old Title", client_id=test_client.id, case_number="CAS-123", court="High Court", opposite_party="State"))
     
     update_data = CaseUpdate(title="New Title", status=CaseStatus.CLOSED)
-    updated = crud_case.update_case(db=db_session, case_id=created_case.id, case_in=update_data)
+    db_case = crud_case.get_case_by_id(db=db_session, case_id=created_case.id)
+    updated = crud_case.update_case(db=db_session, db_case=db_case, case_in=update_data)
     
     assert updated is not None
     assert updated.title == "New Title"
@@ -50,8 +51,8 @@ def test_update_case(db_session, test_client):
 def test_delete_case(db_session, test_client):
     created_case = crud_case.create_case(db=db_session, case_in=CaseCreate(title="To Delete", client_id=test_client.id, case_number="CAS-123", court="High Court", opposite_party="State"))
     
-    deleted = crud_case.delete_case(db=db_session, case_id=created_case.id)
-    assert deleted is True
+    db_case = crud_case.get_case_by_id(db=db_session, case_id=created_case.id)
+    crud_case.delete_case(db=db_session, db_case=db_case)
     
     fetched = crud_case.get_case_by_id(db=db_session, case_id=created_case.id)
     assert fetched is None

@@ -41,7 +41,8 @@ def test_update_client(db_session):
     created_client = crud_client.create_client(db=db_session, client_in=client_in)
     
     update_data = ClientUpdate(email="charlie@new.com", phone="999")
-    updated_client = crud_client.update_client(db=db_session, client_id=created_client.id, client_in=update_data)
+    db_client = crud_client.get_client_by_id(db=db_session, client_id=created_client.id)
+    updated_client = crud_client.update_client(db=db_session, db_client=db_client, client_in=update_data)
     
     assert updated_client is not None
     assert updated_client.id == created_client.id
@@ -53,12 +54,10 @@ def test_delete_client(db_session):
     client_in = ClientCreate(name="Dave", address="123 Street")
     created_client = crud_client.create_client(db=db_session, client_in=client_in)
     
-    deleted = crud_client.delete_client(db=db_session, client_id=created_client.id)
-    assert deleted is True
+    db_client = crud_client.get_client_by_id(db=db_session, client_id=created_client.id)
+    crud_client.delete_client(db=db_session, db_client=db_client)
     
     fetched = crud_client.get_client_by_id(db=db_session, client_id=created_client.id)
     assert fetched is None
 
-def test_delete_client_not_found(db_session):
-    deleted = crud_client.delete_client(db=db_session, client_id=999)
-    assert deleted is False
+
