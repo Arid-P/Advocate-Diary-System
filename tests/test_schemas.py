@@ -9,7 +9,7 @@ from advocatediarysystem.models.case import CaseStatus
 
 def test_client_create_schema():
     # Valid client
-    client = ClientCreate(name="John Doe", email="john@example.com")
+    client = ClientCreate(name="John Doe", email="john@example.com", address="123 Street")
     assert client.name == "John Doe"
     assert client.email == "john@example.com"
     
@@ -29,19 +29,19 @@ def test_client_update_schema():
 
 def test_case_create_schema():
     # Valid case
-    case = CaseCreate(title="State vs John", client_id=1, status=CaseStatus.OPEN)
+    case = CaseCreate(title="State vs John", client_id=1, status=CaseStatus.OPEN, case_number="CAS-123", court="High Court", opposite_party="State")
     assert case.title == "State vs John"
     assert case.client_id == 1
     
     # Default status should be OPEN if not provided
-    case2 = CaseCreate(title="State vs John", client_id=1)
+    case2 = CaseCreate(title="State vs John", client_id=1, case_number="CAS-123", court="High Court", opposite_party="State")
     assert case2.status == CaseStatus.OPEN
 
 def test_hearing_create_schema():
     now = datetime.now(timezone.utc)
     # Valid hearing
-    hearing = HearingCreate(date=now, case_id=1, notes="First hearing")
-    assert hearing.date == now
+    hearing = HearingCreate(hearing_date=now, case_id=1, summary="First hearing", stage="Initial")
+    assert hearing.hearing_date == now
     assert hearing.case_id == 1
     
     # Missing date

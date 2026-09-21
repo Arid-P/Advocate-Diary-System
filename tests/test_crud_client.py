@@ -3,7 +3,7 @@ from advocatediarysystem.crud import client as crud_client
 from advocatediarysystem.schemas.client import ClientCreate, ClientUpdate
 
 def test_create_client(db_session):
-    client_in = ClientCreate(name="Alice", email="alice@example.com", phone="12345")
+    client_in = ClientCreate(name="Alice", email="alice@example.com", phone="12345", address="123 Street")
     client = crud_client.create_client(db=db_session, client_in=client_in)
     
     assert client.id is not None
@@ -12,7 +12,7 @@ def test_create_client(db_session):
     assert client.phone == "12345"
 
 def test_get_client_by_id(db_session):
-    client_in = ClientCreate(name="Bob")
+    client_in = ClientCreate(name="Bob", address="123 Street")
     created_client = crud_client.create_client(db=db_session, client_in=client_in)
     
     fetched_client = crud_client.get_client_by_id(db=db_session, client_id=created_client.id)
@@ -26,9 +26,9 @@ def test_get_client_by_id_not_found(db_session):
 
 def test_get_clients(db_session):
     # Create multiple clients
-    crud_client.create_client(db=db_session, client_in=ClientCreate(name="Client 1"))
-    crud_client.create_client(db=db_session, client_in=ClientCreate(name="Client 2"))
-    crud_client.create_client(db=db_session, client_in=ClientCreate(name="Client 3"))
+    crud_client.create_client(db=db_session, client_in=ClientCreate(name="Client 1", address="123 Street"))
+    crud_client.create_client(db=db_session, client_in=ClientCreate(name="Client 2", address="123 Street"))
+    crud_client.create_client(db=db_session, client_in=ClientCreate(name="Client 3", address="123 Street"))
     
     clients = crud_client.get_clients(db=db_session, skip=0, limit=10)
     assert len(clients) == 3
@@ -37,7 +37,7 @@ def test_get_clients(db_session):
     assert len(clients_limited) == 2
 
 def test_update_client(db_session):
-    client_in = ClientCreate(name="Charlie", email="charlie@old.com")
+    client_in = ClientCreate(name="Charlie", email="charlie@old.com", address="123 Street")
     created_client = crud_client.create_client(db=db_session, client_in=client_in)
     
     update_data = ClientUpdate(email="charlie@new.com", phone="999")
@@ -50,7 +50,7 @@ def test_update_client(db_session):
     assert updated_client.phone == "999" # Updated
 
 def test_delete_client(db_session):
-    client_in = ClientCreate(name="Dave")
+    client_in = ClientCreate(name="Dave", address="123 Street")
     created_client = crud_client.create_client(db=db_session, client_in=client_in)
     
     deleted = crud_client.delete_client(db=db_session, client_id=created_client.id)

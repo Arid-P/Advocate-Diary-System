@@ -9,23 +9,23 @@ from advocatediarysystem.schemas.hearing import HearingCreate, HearingUpdate
 
 @pytest.fixture
 def test_case(db_session):
-    client = crud_client.create_client(db=db_session, client_in=ClientCreate(name="Hearing Client"))
-    return crud_case.create_case(db=db_session, case_in=CaseCreate(title="Hearing Case", client_id=client.id))
+    client = crud_client.create_client(db=db_session, client_in=ClientCreate(name="Hearing Client", address="123 Street"))
+    return crud_case.create_case(db=db_session, case_in=CaseCreate(title="Hearing Case", client_id=client.id, case_number="CAS-123", court="High Court", opposite_party="State"))
 
 def test_create_hearing(db_session, test_case):
     now = datetime.now(timezone.utc)
-    hearing_in = HearingCreate(date=now, case_id=test_case.id, notes="First Hearing")
+    hearing_in = HearingCreate(hearing_date=now, case_id=test_case.id, summary="First Hearing", stage="Initial")
     hearing = crud_hearing.create_hearing(db=db_session, hearing_in=hearing_in)
     
     assert hearing.id is not None
-    assert hearing.date == now
-    assert hearing.notes == "First Hearing"
+    assert hearing.hearing_date == now
+    assert hearing.summary == "First Hearing"
     assert hearing.case_id == test_case.id
 
 def test_get_hearings_by_case(db_session, test_case):
     now = datetime.now(timezone.utc)
-    crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(date=now, case_id=test_case.id))
-    crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(date=now, case_id=test_case.id))
+    crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(hearing_date=now, case_id=test_case.id, stage="Initial"))
+    crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(hearing_date=now, case_id=test_case.id, stage="Initial"))
     
     hearings = crud_hearing.get_hearings_by_case(db=db_session, case_id=test_case.id)
     assert len(hearings) == 2
@@ -33,18 +33,18 @@ def test_get_hearings_by_case(db_session, test_case):
 
 def test_update_hearing(db_session, test_case):
     now = datetime.now(timezone.utc)
-    created = crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(date=now, case_id=test_case.id))
+    created = crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(hearing_date=now, case_id=test_case.id, stage="Initial"))
     
-    update_data = HearingUpdate(notes="Updated notes")
+    update_data = HearingUpdate(summary="Updated notes")
     updated = crud_hearing.update_hearing(db=db_session, hearing_id=created.id, hearing_in=update_data)
     
     assert updated is not None
-    assert updated.notes == "Updated notes"
-    assert updated.date == now # Remains unchanged
+    assert updated.summary == "Updated notes"
+    assert updated.hearing_date == now # Remains unchanged
 
 def test_delete_hearing(db_session, test_case):
     now = datetime.now(timezone.utc)
-    created = crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(date=now, case_id=test_case.id))
+    created = crud_hearing.create_hearing(db=db_session, hearing_in=HearingCreate(hearing_date=now, case_id=test_case.id, stage="Initial"))
     
     deleted = crud_hearing.delete_hearing(db=db_session, hearing_id=created.id)
     assert deleted is True
