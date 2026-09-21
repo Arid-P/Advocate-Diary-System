@@ -6,10 +6,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 current_file = Path(__file__).resolve()
 
+DB_NAME = "diary.db"
+
 BASE_DIR = current_file.parents[2]         
 BACKEND_DIR = BASE_DIR / "src" / "advocatediarysystem"
 
-DB_PATH = BASE_DIR / "database" / "diary.db" 
+DB_PATH = BASE_DIR / "database" / DB_NAME 
 LOG_PATH = BACKEND_DIR / "logs" / "logs.log"
 
 
