@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Enum as SQLEnum
 from enum import Enum
 
 from advocatediarysystem.database import Base
@@ -29,7 +30,10 @@ class Case(Base):
     description: Mapped[str | None] = mapped_column(Text)
 
     court: Mapped[str] = mapped_column(String(50), nullable=False)
-    status: Mapped[str] = mapped_column(String(10), default=CaseStatus.OPEN, nullable=False)
+    status: Mapped[str] = mapped_column(
+        SQLEnum(CaseStatus), 
+        default=CaseStatus.OPEN, 
+        nullable=False)
 
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id", ondelete="Cascade"), nullable=False)
     client: Mapped["Client"] = relationship(back_populates="cases")
