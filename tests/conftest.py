@@ -5,11 +5,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from advocatediarysystem.database import Base
-from advocatediarysystem.config import settings
+from advocatediarysystem.config import BASE_DIR
 
 # Override the database path for tests
 TEST_DB_NAME = "test.db"
-TEST_DB_PATH = settings.BASE_DIR / "database" / TEST_DB_NAME
+TEST_DB_PATH = BASE_DIR / "database" / TEST_DB_NAME
 TEST_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"
 
 # Create the test engine
