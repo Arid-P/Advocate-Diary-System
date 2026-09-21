@@ -24,3 +24,7 @@ advocate_diary_system_project_spec.md
 
 # Test runner cache (pytest)
 .pytest_cache/
+
+# Application logs
+logs/
+*.log

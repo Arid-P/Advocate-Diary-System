@@ -6,9 +6,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 current_file = Path(__file__).resolve()
 
-BASE_DIR = current_file.parents[2]          
+BASE_DIR = current_file.parents[2]         
+BACKEND_DIR = BASE_DIR / "src" / "advocatediarysystem"
+
 DB_PATH = BASE_DIR / "database" / "diary.db" 
-# print(f"{BASE_DIR = }\n{DB_PATH = }")
+LOG_PATH = BACKEND_DIR / "logs" / "logs.log"
+
 
 class Settings(BaseSettings):
     DATABASE_URL: str = f"sqlite:///{DB_PATH}"
