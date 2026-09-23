@@ -10,6 +10,7 @@ DB_NAME = "diary.db"
 
 BASE_DIR = current_file.parents[2]         
 BACKEND_DIR = BASE_DIR / "src" / "advocatediarysystem"
+FRONTEND_DIR = BASE_DIR / "src" / "frontend"
 
 DB_PATH = BASE_DIR / "database" / DB_NAME 
 LOG_PATH = BACKEND_DIR / "logs" / "logs.log"

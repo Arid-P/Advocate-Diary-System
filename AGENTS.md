@@ -49,13 +49,26 @@ AdvocateDiarySystem/
 │   │   ├── case.py                 # create_case, get_case_by_id, get_cases, get_cases_by_client, update_case, delete_case
 │   │   └── hearing.py              # create_hearing, get_hearing_by_id, get_hearings, get_hearings_by_case, update_hearing, delete_hearing
 │   │
-│   ├── routers/                    # FastAPI route handlers (TO BE BUILT — Milestone 5)
+│   ├── routers/                    # FastAPI route handlers (Milestone 5)
 │   │   ├── clients.py
 │   │   ├── cases.py
 │   │   └── hearings.py
 │   │
-│   └── utils/
-│       └── logger.py               # setup_logger() → writes to logs/logs.log
+│   ├── utils/
+│   │   └── logger.py               # setup_logger() → writes to logs/logs.log
+│   │
+│   └── main.py                     # App factory, CORS, /api/health, and static frontend mount
+│
+├── src/frontend/                   # Executive Legal UI (Zero-build HTML5/CSS3/ES6)
+│   ├── index.html                  # Single-page application skeleton
+│   ├── css/
+│   │   ├── variables.css           # Caramel (#C87740) & Raisin (#2E1F26) design tokens
+│   │   └── style.css               # Typography, cards, tables, modals, toasts
+│   └── js/
+│       ├── api.js                  # FastAPI fetch client with resilient 404/422 handling
+│       ├── state.js                # In-memory reactive state & KPI store
+│       ├── ui.js                   # DOM rendering for Dashboard, Clients, Cases, Hearings
+│       └── app.js                  # App controller, keyboard shortcuts, form submission wiring
 │
 ├── tests/                          # Pytest test suite (on branch: test_setup)
 │   ├── conftest.py                 # File-based test DB (database/test.db), per-test table recreation
@@ -189,8 +202,8 @@ Each entity follows a 4-schema pattern:
 | M2: ORM Models | ✅ Done | `models/client.py`, `case.py`, `hearing.py` |
 | M3: Pydantic Schemas | ✅ Done | `schemas/client.py`, `case.py`, `hearing.py` |
 | M4: CRUD Layer | ✅ Done | `crud/client.py`, `case.py`, `hearing.py` |
-| M5: FastAPI Routers | 🔜 Next | `routers/clients.py`, `cases.py`, `hearings.py` |
-| M6: Main App & Swagger | ⬜ Pending | `main.py` integration |
+| M5: FastAPI Routers | ✅ Done | `routers/clients.py`, `cases.py`, `hearings.py` |
+| M6: Main App & Swagger | ✅ Done | `main.py` integration + Web UI |
 
 ---
 
@@ -200,7 +213,7 @@ Each entity follows a 4-schema pattern:
 - **Run**: `uv run pytest -s -v`
 - **Database**: File-based `database/test.db` (NOT in-memory)
 - **Isolation**: Tables are dropped and recreated before each test function
-- **23 tests** across models, schemas, and all 3 CRUD modules — all passing
+- **27 tests** across models, schemas, CRUD modules, health check, CORS, and static file delivery — all passing
 
 ---
 

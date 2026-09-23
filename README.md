@@ -98,9 +98,9 @@ DATABASE_URL=sqlite:///database/diary.db
 - [x] **Milestone 1**: Configuration & Database Engine (`config.py`, `database.py`)
 - [x] **Milestone 2**: Relational Models (`Client` $\rightarrow$ `Case` $\rightarrow$ `Hearing` with cascade rules)
 - [x] **Milestone 3**: Pydantic v2 Validation Schemas (`Create`, `Read`, `Update` contracts)
-- [ ] **Milestone 4**: Data Access Layer (`crud/` with modern SQLAlchemy 2.0 `select()` statements)
-- [ ] **Milestone 5**: FastAPI Route Handlers & Dependency Injection (`routers/`)
-- [ ] **Milestone 6**: Application Integration (`main.py`) & Interactive Swagger UI Testing (`/docs`)
+- [x] **Milestone 4**: Data Access Layer (`crud/` with modern SQLAlchemy 2.0 `select()` statements)
+- [x] **Milestone 5**: FastAPI Route Handlers & Dependency Injection (`routers/`)
+- [x] **Milestone 6**: Application Integration (`main.py`) & Interactive Swagger UI Testing (`/docs`)
 
 ---
 
