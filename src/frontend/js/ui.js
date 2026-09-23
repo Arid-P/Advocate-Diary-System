@@ -945,6 +945,212 @@ const UI = {
       </div>
     `;
   },
+
+  /* --------------------------------------------------------------------------
+     Authentication Gateway (Login & Sign Up)
+     -------------------------------------------------------------------------- */
+  updateAdvocateProfileInSidebar() {
+    const card = document.getElementById('sidebarAdvocateCard');
+    const avatar = document.getElementById('sidebarAdvocateAvatar');
+    const nameEl = document.getElementById('sidebarAdvocateName');
+    const metaEl = document.getElementById('sidebarAdvocateMeta');
+
+    const advocate = AppState.data.currentAdvocate;
+    if (advocate && card) {
+      card.style.display = 'flex';
+      if (avatar) avatar.textContent = this.getInitials(advocate.name);
+      if (nameEl) nameEl.textContent = advocate.name;
+      if (metaEl) metaEl.textContent = advocate.enrollment_number || 'Advocate';
+    } else if (card) {
+      card.style.display = 'none';
+    }
+  },
+
+  renderAuth() {
+    const container = document.getElementById('authScreenContainer');
+    if (!container) return;
+
+    const mode = AppState.data.authMode; // 'login' or 'signup'
+    const role = AppState.data.authRole; // 'advocate' or 'client'
+
+    let formContent = '';
+
+    if (mode === 'login') {
+      if (role === 'advocate') {
+        formContent = `
+          <form id="advocateLoginForm">
+            <div class="form-group">
+              <label class="form-label" for="advocateLoginIdentifier">Bar Enrollment No. / Email <span class="required">*</span></label>
+              <input type="text" class="form-input" id="advocateLoginIdentifier" required placeholder="e.g. MAH/1042/2019 or adv@example.com">
+            </div>
+
+            <div class="form-group" style="margin-top: var(--space-4);">
+              <label class="form-label" for="advocateLoginPassword">Password <span class="required">*</span></label>
+              <input type="password" class="form-input" id="advocateLoginPassword" required placeholder="Enter password">
+            </div>
+
+            <div id="advocateLoginError" style="display: none; margin-top: var(--space-4); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--feedback-danger-wash); border: 1px solid var(--feedback-danger); color: var(--feedback-danger); font-size: 0.825rem;"></div>
+
+            <button type="submit" class="btn btn-primary" id="advocateLoginSubmitBtn" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: var(--space-5);">
+              <span>Sign In to Advocate Practice &rarr;</span>
+            </button>
+          </form>
+        `;
+      } else {
+        // Client Login
+        const allClients = AppState.data.clients;
+        let demoHtml = '';
+        if (allClients.length > 0) {
+          demoHtml = `
+            <div class="portal-demo-clients" style="margin-top: var(--space-4);">
+              <span style="font-size: 0.78rem; color: var(--text-muted);">Quick-access client demo accounts:</span>
+              <div class="portal-demo-chips">
+                ${allClients.slice(0, 5).map((c) => `
+                  <button type="button" class="portal-chip" onclick="UI.quickClientLogin(${c.id})">
+                    ${this.escape(c.name)} (ID: ${c.id})
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        formContent = `
+          <form id="clientPortalLoginForm">
+            <div class="form-group">
+              <label class="form-label" for="clientLoginIdentifier">Client ID or Registered Phone <span class="required">*</span></label>
+              <input type="text" class="form-input" id="clientLoginIdentifier" required placeholder="e.g. 1 or +91 9876543210">
+              <span class="form-hint">Enter your numeric ID or mobile number registered with your counsel.</span>
+            </div>
+
+            <div id="clientLoginError" style="display: none; margin-top: var(--space-4); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--feedback-danger-wash); border: 1px solid var(--feedback-danger); color: var(--feedback-danger); font-size: 0.825rem;"></div>
+
+            <button type="submit" class="btn btn-primary" id="clientLoginSubmitBtn" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: var(--space-5);">
+              <span>Access My Matter Portal &rarr;</span>
+            </button>
+          </form>
+          ${demoHtml}
+        `;
+      }
+    } else {
+      // Sign Up Mode
+      if (role === 'advocate') {
+        formContent = `
+          <form id="advocateSignupForm">
+            <div class="form-group">
+              <label class="form-label" for="advocateSignupName">Full Legal Name <span class="required">*</span></label>
+              <input type="text" class="form-input" id="advocateSignupName" required placeholder="e.g. Adv. Rajesh Sharma">
+            </div>
+
+            <div class="form-row" style="margin-top: var(--space-3);">
+              <div class="form-group">
+                <label class="form-label" for="advocateSignupEnrollment">Bar Enrollment No. <span class="required">*</span></label>
+                <input type="text" class="form-input" id="advocateSignupEnrollment" required placeholder="e.g. MAH/1042/2019">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="advocateSignupPhone">Phone Number <span class="required">*</span></label>
+                <input type="tel" class="form-input" id="advocateSignupPhone" required placeholder="+91 9876543210">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: var(--space-3);">
+              <label class="form-label" for="advocateSignupEmail">Official Email <span class="required">*</span></label>
+              <input type="email" class="form-input" id="advocateSignupEmail" required placeholder="advocate@courtpractice.com">
+            </div>
+
+            <div class="form-group" style="margin-top: var(--space-3);">
+              <label class="form-label" for="advocateSignupAddress">Chamber / Office Address <span class="required">*</span></label>
+              <textarea class="form-textarea" id="advocateSignupAddress" required placeholder="Court Chambers, Forum Complex, City, State, PIN" style="min-height: 60px;"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-top: var(--space-3);">
+              <label class="form-label" for="advocateSignupPassword">Create Master Password <span class="required">*</span></label>
+              <input type="password" class="form-input" id="advocateSignupPassword" required minlength="6" placeholder="At least 6 characters">
+            </div>
+
+            <div id="advocateSignupError" style="display: none; margin-top: var(--space-4); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--feedback-danger-wash); border: 1px solid var(--feedback-danger); color: var(--feedback-danger); font-size: 0.825rem;"></div>
+
+            <button type="submit" class="btn btn-primary" id="advocateSignupSubmitBtn" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: var(--space-5);">
+              <span>Complete Advocate Registration &rarr;</span>
+            </button>
+          </form>
+        `;
+      } else {
+        // Client Sign Up
+        formContent = `
+          <form id="clientSignupForm">
+            <div class="form-group">
+              <label class="form-label" for="clientSignupName">Your Full Name <span class="required">*</span></label>
+              <input type="text" class="form-input" id="clientSignupName" required placeholder="e.g. Suresh Kumar">
+            </div>
+
+            <div class="form-row" style="margin-top: var(--space-3);">
+              <div class="form-group">
+                <label class="form-label" for="clientSignupPhone">Mobile Phone <span class="required">*</span></label>
+                <input type="tel" class="form-input" id="clientSignupPhone" required placeholder="+91 9876543210">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="clientSignupEmail">Email Address</label>
+                <input type="email" class="form-input" id="clientSignupEmail" placeholder="client@example.com">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: var(--space-3);">
+              <label class="form-label" for="clientSignupAddress">Residential / Office Address <span class="required">*</span></label>
+              <textarea class="form-textarea" id="clientSignupAddress" required placeholder="Street address, City, PIN" style="min-height: 60px;"></textarea>
+            </div>
+
+            <div id="clientSignupError" style="display: none; margin-top: var(--space-4); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--feedback-danger-wash); border: 1px solid var(--feedback-danger); color: var(--feedback-danger); font-size: 0.825rem;"></div>
+
+            <button type="submit" class="btn btn-primary" id="clientSignupSubmitBtn" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: var(--space-5);">
+              <span>Register as Client &rarr;</span>
+            </button>
+          </form>
+        `;
+      }
+    }
+
+    container.innerHTML = `
+      <div class="auth-card">
+        <div class="auth-brand-header">
+          <div class="auth-brand-icon">
+            <svg class="icon" style="width: 28px; height: 28px;" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+          </div>
+          <h2 class="auth-title">${mode === 'login' ? 'Advocate Diary System' : 'Create an Account'}</h2>
+          <p class="auth-subtitle">${mode === 'login' ? 'Legal practice management and client matter portal' : 'Choose your account type to proceed with registration'}</p>
+        </div>
+
+        <div class="auth-role-tabs">
+          <button type="button" class="auth-role-tab ${role === 'advocate' ? 'active' : ''}" onclick="AppState.setAuthRole('advocate')">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <span>Advocate Practice</span>
+          </button>
+          <button type="button" class="auth-role-tab ${role === 'client' ? 'active' : ''}" onclick="AppState.setAuthRole('client')">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Client Portal</span>
+          </button>
+        </div>
+
+        ${formContent}
+
+        <div class="auth-switch-link">
+          ${mode === 'login' 
+            ? `Don't have an account yet? <button type="button" onclick="AppState.setAuthMode('signup')">Sign Up</button>`
+            : `Already registered? <button type="button" onclick="AppState.setAuthMode('login')">Sign In</button>`
+          }
+        </div>
+      </div>
+    `;
+  },
+
+  quickClientLogin(clientId) {
+    const client = AppState.getClientById(clientId);
+    if (client) {
+      AppState.setPortalClient(client);
+      AppState.setView('portal');
+      this.showToast(`Logged into portal as ${client.name}`, 'success');
+    }
+  },
 };
 
 window.UI = UI;
