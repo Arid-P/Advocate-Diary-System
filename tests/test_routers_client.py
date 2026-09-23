@@ -84,3 +84,32 @@ def test_delete_client(client: TestClient):
 def test_delete_client_not_found(client: TestClient):
     response = client.delete("/clients/999")
     assert response.status_code == 404
+
+
+def test_portal_lookup_by_id(client: TestClient):
+    post_resp = client.post(
+        "/clients/", json={"name": "Portal User", "phone": "1122334455", "address": "Portal St"}
+    )
+    client_id = post_resp.json()["id"]
+
+    response = client.get(f"/clients/portal/lookup?identifier={client_id}")
+    assert response.status_code == 200
+    assert response.json()["id"] == client_id
+    assert response.json()["name"] == "Portal User"
+
+
+def test_portal_lookup_by_phone(client: TestClient):
+    client.post(
+        "/clients/", json={"name": "Phone User", "phone": "+919999888877", "address": "Phone St"}
+    )
+
+    response = client.get("/clients/portal/lookup?identifier=+919999888877")
+    assert response.status_code == 200
+    assert response.json()["name"] == "Phone User"
+    assert response.json()["phone"] == "+919999888877"
+
+
+def test_portal_lookup_not_found(client: TestClient):
+    response = client.get("/clients/portal/lookup?identifier=nonexistent_9999")
+    assert response.status_code == 404
+    assert "no client found" in response.json()["detail"].lower()
