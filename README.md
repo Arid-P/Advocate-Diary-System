@@ -102,6 +102,8 @@ DATABASE_URL=sqlite:///database/diary.db
 - [ ] **Milestone 5**: FastAPI Route Handlers & Dependency Injection (`routers/`)
 - [ ] **Milestone 6**: Application Integration (`main.py`) & Interactive Swagger UI Testing (`/docs`)
 
+**Testing Disclaimer**: The automated test suite (`tests/` directory) was generated entirely by an AI assistant. All backend source code (models, schemas, CRUD, routers, and the FastAPI application) was manually written by the user.
+
 ---
 
 ## License
