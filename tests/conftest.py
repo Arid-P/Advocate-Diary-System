@@ -54,3 +54,24 @@ def db_session(setup_database):
         yield session
     finally:
         session.close()
+
+from fastapi.testclient import TestClient
+from advocatediarysystem.main import app
+from advocatediarysystem.database import get_db
+
+@pytest.fixture(scope="function")
+def client(db_session):
+    """
+    Test client for FastAPI endpoints.
+    Overrides the get_db dependency to use the test database session.
+    """
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass # DB session is closed by the db_session fixture
+            
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
