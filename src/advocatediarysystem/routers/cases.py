@@ -36,12 +36,12 @@ def get_case_by_id(case_id: int, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/client{client_id}",
+    "/client/{client_id}",
     response_model=list[case_schema.CaseRead],
     status_code=status.HTTP_200_OK,
 )
 def get_cases_by_client(
-    client_id: int, skip: int = 0, limit: int = 0, db: Session = Depends(get_db)
+    client_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
     """Gets a cases associated with a client."""
     cases = case_crud.get_cases_by_client(
@@ -62,7 +62,7 @@ def get_cases_by_client(
     response_model=list[case_schema.CaseRead],
     status_code=status.HTTP_200_OK,
 )
-def get_cases(skip: int = 0, limit: int = 0, db: Session = Depends(get_db)):
+def get_cases(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Gets a all the cases with the specified offset and limit."""
     cases = case_crud.get_cases(db=db, skip=skip, limit=limit)
 
@@ -76,7 +76,7 @@ def get_cases(skip: int = 0, limit: int = 0, db: Session = Depends(get_db)):
 
 
 @router.patch(
-    "/{case_id}", response_model=case_schema.CaseRead, status_code=status.HTTP_200_OK
+    "/case/{case_id}", response_model=case_schema.CaseRead, status_code=status.HTTP_200_OK
 )
 def update_case(
     case_id: int, case_in: case_schema.CaseUpdate, db: Session = Depends(get_db)
