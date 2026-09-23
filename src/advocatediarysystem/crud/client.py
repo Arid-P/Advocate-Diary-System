@@ -34,6 +34,19 @@ def get_client_by_id(db: Session, client_id: int) -> Client | None:
     return client
 
 
+def get_client_by_phone(db: Session, phone: str) -> Client | None:
+    logger.info(f"Trying to fetch a client with phone: {phone}")
+
+    query = select(Client).where(Client.phone == phone)
+    client = db.scalar(query)
+
+    if client:
+        logger.info("Fetched the client by phone.")
+    else:
+        logger.info("No such client exists in database with this phone.")
+    return client
+
+
 def get_clients(db: Session, skip: int = 0, limit: int = 100) -> list[Client]:
     query = select(Client).offset(skip).limit(limit)
     clients = list(db.scalars(query).all())
