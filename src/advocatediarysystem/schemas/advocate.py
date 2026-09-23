@@ -1,11 +1,11 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 
 
 class AdvocateBase(BaseModel):
     name: str
     enrollment_number: str
-    email: EmailStr
+    email: str
     phone: str
     chamber_address: str
 
