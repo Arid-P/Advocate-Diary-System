@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Court Diary & Hearings',
       subtitle: 'Chronological proceedings, cause lists, orders, and adjournment calendar',
     },
+    portal: {
+      title: 'Client Matter Portal',
+      subtitle: 'Self-service client access to active cases, proceedings, orders, and hearings',
+    },
   };
 
   // 3. Register State Change Subscribers
@@ -33,14 +37,20 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'clients_updated':
         UI.renderClients();
         UI.renderDashboard();
+        if (AppState.data.currentView === 'portal') UI.renderPortal();
         break;
       case 'cases_updated':
         UI.renderCases();
         UI.renderDashboard();
+        if (AppState.data.currentView === 'portal') UI.renderPortal();
         break;
       case 'hearings_updated':
         UI.renderHearings();
         UI.renderDashboard();
+        if (AppState.data.currentView === 'portal') UI.renderPortal();
+        break;
+      case 'portal_client_updated':
+        if (AppState.data.currentView === 'portal') UI.renderPortal();
         break;
       case 'view_change':
         switchViewUI(payload);
@@ -74,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewName === 'clients') UI.renderClients();
     if (viewName === 'cases') UI.renderCases();
     if (viewName === 'hearings') UI.renderHearings();
+    if (viewName === 'portal') UI.renderPortal();
 
     // Close mobile sidebar if open
     const sidebar = document.querySelector('.sidebar');
@@ -604,6 +615,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // --- CLIENT PORTAL LOGIN FORM ---
+  document.addEventListener('submit', async (e) => {
+    if (e.target && e.target.id === 'portalLoginForm') {
+      e.preventDefault();
+      const input = document.getElementById('portalIdentifierInput');
+      const errorBox = document.getElementById('portalLoginError');
+      const submitBtn = document.getElementById('portalSubmitBtn');
+      if (!input) return;
+
+      const identifier = input.value.trim();
+      if (!identifier) return;
+
+      if (errorBox) errorBox.style.display = 'none';
+      setButtonLoading(submitBtn, true, 'Accessing...');
+
+      try {
+        const client = await API.lookupClient(identifier);
+        AppState.setPortalClient(client);
+        UI.showToast(`Welcome to your case portal, ${client.name}!`, 'success');
+        UI.renderPortal();
+      } catch (err) {
+        if (errorBox) {
+          errorBox.textContent = err.message || 'Client account not found. Please verify your ID or phone number.';
+          errorBox.style.display = 'block';
+        } else {
+          UI.showToast(err.message, 'error');
+        }
+      } finally {
+        setButtonLoading(submitBtn, false, 'Access My Case Portal →');
+      }
+    }
+  });
 
   // 10. Start the App!
   loadInitialData();
