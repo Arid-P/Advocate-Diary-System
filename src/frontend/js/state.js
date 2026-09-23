@@ -8,8 +8,13 @@ const AppState = {
     clients: [],
     cases: [],
     hearings: [],
-    currentView: 'dashboard',
-    theme: localStorage.getItem('advocate_theme') || 'dark',
+    currentAdvocate: (() => {
+      try {
+        return JSON.parse(localStorage.getItem('advocate_user')) || null;
+      } catch {
+        return null;
+      }
+    })(),
     portalClient: (() => {
       try {
         return JSON.parse(sessionStorage.getItem('advocate_portal_client')) || null;
@@ -17,6 +22,10 @@ const AppState = {
         return null;
       }
     })(),
+    authMode: 'login', // 'login' or 'signup'
+    authRole: 'advocate', // 'advocate' or 'client'
+    currentView: 'auth', // Initial screen is login/auth screen
+    theme: localStorage.getItem('advocate_theme') || 'dark',
     filters: {
       clientSearch: '',
       caseStatus: 'all',
@@ -64,13 +73,48 @@ const AppState = {
   },
 
   /* --------------------------------------------------------------------------
-     View Navigation
+     View Navigation & Authentication State
      -------------------------------------------------------------------------- */
   setView(viewName) {
-    if (['dashboard', 'clients', 'cases', 'hearings', 'portal'].includes(viewName)) {
+    if (['auth', 'dashboard', 'clients', 'cases', 'hearings', 'portal'].includes(viewName)) {
       this.data.currentView = viewName;
       this.notify('view_change', viewName);
     }
+  },
+
+  setAdvocate(advocate) {
+    this.data.currentAdvocate = advocate;
+    try {
+      if (advocate) {
+        localStorage.setItem('advocate_user', JSON.stringify(advocate));
+      } else {
+        localStorage.removeItem('advocate_user');
+      }
+    } catch (e) {
+      console.warn('Could not persist advocate in localStorage', e);
+    }
+    this.notify('advocate_updated', advocate);
+  },
+
+  clearAdvocate() {
+    this.setAdvocate(null);
+  },
+
+  setAuthMode(mode) {
+    this.data.authMode = mode;
+    this.notify('auth_mode_changed', mode);
+  },
+
+  setAuthRole(role) {
+    this.data.authRole = role;
+    this.notify('auth_role_changed', role);
+  },
+
+  logout() {
+    this.clearAdvocate();
+    this.clearPortalClient();
+    this.setView('auth');
+    this.notify('auth_logout', null);
   },
 
   /* --------------------------------------------------------------------------
