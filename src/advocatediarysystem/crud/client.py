@@ -43,12 +43,13 @@ def get_clients(db: Session, skip: int = 0, limit: int = 100) -> list[Client]:
 
 
 def update_client(db: Session, db_client: Client, client_in: ClientUpdate) -> Client:
-    logger.warning(f"Trying to update the client with id: {db_client.id}") 
+    logger.warning(f"Trying to update the client with id: {db_client.id}")
 
     update_data = client_in.model_dump(exclude_unset=True)
+
     for field, value in update_data.items():
         setattr(db_client, field, value)
-
+    
     db.commit()
     db.refresh(db_client)
 
@@ -57,7 +58,7 @@ def update_client(db: Session, db_client: Client, client_in: ClientUpdate) -> Cl
 
 
 def delete_client(db: Session, db_client: Client) -> None:
-    logger.warning(f"Trying to delete the client with id: {db_client.id}") 
+    logger.warning(f"Trying to delete the client with id: {db_client.id}")
 
     db.delete(db_client)
     db.commit()
