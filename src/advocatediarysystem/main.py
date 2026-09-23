@@ -4,7 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
-from advocatediarysystem.routers import clients_router, cases_router, hearings_router
+from advocatediarysystem.routers import (
+    clients_router,
+    cases_router,
+    hearings_router,
+    auth_router,
+)
 from advocatediarysystem.config import FRONTEND_DIR
 
 app = FastAPI(
@@ -23,6 +28,7 @@ app.add_middleware(
 )
 
 # API Routers
+app.include_router(auth_router)
 app.include_router(clients_router)
 app.include_router(cases_router)
 app.include_router(hearings_router)
