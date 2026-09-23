@@ -11,7 +11,9 @@ router = APIRouter(prefix="/clients", tags=["Clients"])
 
 
 @router.post(
-    "/", response_model=client_schemas.ClientRead, status_code=status.HTTP_201_CREATED
+    "/", 
+    response_model=client_schemas.ClientRead, 
+    status_code=status.HTTP_201_CREATED
 )
 def create_client(
     client_in: client_schemas.ClientCreate, db: Session = Depends(get_db)
@@ -29,7 +31,7 @@ def get_client(client_id: int, db: Session = Depends(get_db)):
     if not db_client:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            details="User with the id {client_id} was not found",
+            detail=f"User with the id {client_id} was not found",
         )
 
     return db_client
@@ -54,7 +56,7 @@ def update_client(
     if not db_client:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No User with the id {client_id} was found. Hence could not update",
+            detail=f"No User with the id {client_id} was found. Hence could not update",
         )
 
     updated_client = client_crud.update_client(db, db_client, client_in)
@@ -69,7 +71,7 @@ def delete_client(client_id: int, db: Session = Depends(get_db)):
     if not db_client:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User with the id {client_id} was not found, hence could not update.",
+            detail=f"User with the id {client_id} was not found, hence could not update.",
         )
 
     client_crud.delete_client(db, db_client)
