@@ -61,3 +61,16 @@ def test_delete_client(db_session):
     assert fetched is None
 
 
+def test_get_client_by_phone(db_session):
+    client_in = ClientCreate(name="Eve", phone="+919876543210", address="123 Street")
+    created_client = crud_client.create_client(db=db_session, client_in=client_in)
+
+    fetched_client = crud_client.get_client_by_phone(db=db_session, phone="+919876543210")
+    assert fetched_client is not None
+    assert fetched_client.id == created_client.id
+    assert fetched_client.name == "Eve"
+
+
+def test_get_client_by_phone_not_found(db_session):
+    fetched_client = crud_client.get_client_by_phone(db=db_session, phone="0000000000")
+    assert fetched_client is None
