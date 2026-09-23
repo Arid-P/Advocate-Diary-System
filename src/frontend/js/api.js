@@ -98,6 +98,10 @@ const API = {
     return this.request(`/clients/${clientId}`);
   },
 
+  async lookupClient(identifier) {
+    return this.request(`/clients/portal/lookup?identifier=${encodeURIComponent(identifier)}`);
+  },
+
   async createClient(clientData) {
     return this.request('/clients/', {
       method: 'POST',
