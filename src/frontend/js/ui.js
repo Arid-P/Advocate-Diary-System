@@ -388,6 +388,9 @@ const UI = {
           <td style="font-size: 0.8rem; color: var(--text-muted);">${joinedDate}</td>
           <td>
             <div class="table-actions">
+              <button class="btn btn-ghost btn-sm btn-icon" style="color: var(--color-primary);" title="Open Client Portal View" onclick="UI.openPortalForClient(${c.id})">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              </button>
               <button class="btn btn-ghost btn-sm btn-icon" title="Edit Client" onclick="UI.openEditClientModalById(${c.id})">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
               </button>
@@ -701,6 +704,246 @@ const UI = {
     document.getElementById('deleteHearingTitle').textContent = `${caseTitle} (${h.stage} on ${this.formatDate(h.hearing_date)})`;
 
     this.openModal('deleteHearingModal');
+  },
+
+  /* --------------------------------------------------------------------------
+     Client Portal Rendering
+     -------------------------------------------------------------------------- */
+  openPortalForClient(clientId) {
+    const client = AppState.getClientById(clientId);
+    if (client) {
+      AppState.setPortalClient(client);
+      AppState.setView('portal');
+    }
+  },
+
+  signOutPortalClient() {
+    AppState.clearPortalClient();
+    this.renderPortal();
+    this.showToast('Signed out of Client Portal.', 'info');
+  },
+
+  renderPortal() {
+    const container = document.getElementById('portalContainer');
+    if (!container) return;
+
+    const client = AppState.getPortalClient();
+
+    if (!client) {
+      // 1. Render Portal Login / Access Form
+      const allClients = AppState.data.clients;
+      let demoHtml = '';
+      if (allClients.length > 0) {
+        demoHtml = `
+          <div class="portal-demo-clients">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Registered clients in system (click to quick test):</span>
+            <div class="portal-demo-chips">
+              ${allClients.slice(0, 6).map((c) => `
+                <button type="button" class="portal-chip" onclick="UI.openPortalForClient(${c.id})">
+                  ${this.escape(c.name)} (ID: ${c.id})
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="portal-login-wrap">
+          <div class="portal-login-card">
+            <div class="portal-login-header">
+              <div class="portal-icon-circle">
+                <svg class="icon" style="width: 28px; height: 28px;" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+              </div>
+              <h2 class="portal-login-title">Client Case Portal</h2>
+              <p class="portal-login-desc">Sign in with your Client ID or Registered Phone Number to view your court matters, proceedings, and hearing schedules freely.</p>
+            </div>
+
+            <form id="portalLoginForm">
+              <div class="form-group" style="margin-bottom: var(--space-4);">
+                <label class="form-label" for="portalIdentifierInput">Client ID or Registered Phone <span class="required">*</span></label>
+                <input type="text" class="form-input" id="portalIdentifierInput" required placeholder="e.g. 1 or +91 9876543210" style="font-size: 1rem; padding: 0.75rem 1rem;">
+                <span class="form-hint">Enter your Client ID or the phone number given to your advocate.</span>
+              </div>
+
+              <div id="portalLoginError" style="display: none; margin-bottom: var(--space-4); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--feedback-danger-wash); border: 1px solid var(--feedback-danger); color: var(--feedback-danger); font-size: 0.825rem;"></div>
+
+              <button type="submit" class="btn btn-primary" id="portalSubmitBtn" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem;">
+                <span>Access My Case Portal &rarr;</span>
+              </button>
+            </form>
+
+            ${demoHtml}
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // 2. Render Logged-in Client Dashboard
+    const clientCases = AppState.getCasesForClient(client.id);
+    const activeCases = clientCases.filter((c) => (c.status || '').toLowerCase() !== 'closed');
+
+    // Find upcoming hearings across all of this client's cases
+    const caseIds = clientCases.map((c) => c.id);
+    const clientHearings = AppState.data.hearings
+      .filter((h) => caseIds.includes(h.case_id))
+      .sort((a, b) => new Date(a.hearing_date) - new Date(b.hearing_date));
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const upcomingHearings = clientHearings.filter((h) => (h.hearing_date || '').split('T')[0] >= todayStr);
+    const nextHearing = upcomingHearings.length > 0 ? upcomingHearings[0] : null;
+
+    let casesHtml = '';
+    if (clientCases.length === 0) {
+      casesHtml = `
+        <div class="empty-state" style="padding: 3rem 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-default);">
+          <div class="empty-icon-wrap">
+            <svg class="icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <h3 class="empty-title">No Legal Matters Found</h3>
+          <p class="empty-desc">You do not currently have any court cases registered under your client profile.</p>
+        </div>
+      `;
+    } else {
+      casesHtml = clientCases.map((c) => {
+        const hearingsForThisCase = AppState.getHearingsForCase(c.id).sort((a, b) => new Date(b.hearing_date) - new Date(a.hearing_date));
+        const statusClass = `badge-${(c.status || 'open').toLowerCase()}`;
+
+        let hearingsListHtml = '';
+        if (hearingsForThisCase.length === 0) {
+          hearingsListHtml = `<p style="font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-top: var(--space-2);">No court hearings scheduled yet for this matter.</p>`;
+        } else {
+          hearingsListHtml = `
+            <div class="portal-hearing-list">
+              ${hearingsForThisCase.map((h) => `
+                <div class="portal-hearing-row">
+                  <div class="portal-hearing-badge-date">
+                    ${this.formatDate(h.hearing_date)}
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                      <span class="badge badge-stage">${this.escape(h.stage)}</span>
+                      ${h.next_hearing_date ? `<span class="adjourned-date" style="font-size: 0.78rem;">Adjourned: ${this.formatDate(h.next_hearing_date)}</span>` : '<span style="font-size: 0.75rem; color: var(--text-muted);">Next date pending</span>'}
+                    </div>
+                    ${h.summary ? `<div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-top: 4px;">${this.escape(h.summary)}</div>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        return `
+          <div class="portal-matter-card">
+            <div class="portal-matter-header">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  <span class="case-number-pill">${this.escape(c.case_number)}</span>
+                  <span class="badge ${statusClass}">${this.escape(c.status)}</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${this.escape(c.title)}</h3>
+                <div style="font-size: 0.8rem; color: var(--color-primary); font-weight: 600;">${this.escape(c.court)}</div>
+              </div>
+            </div>
+
+            <div class="case-meta-list" style="margin-bottom: var(--space-3);">
+              <div class="case-meta-row">
+                <span class="case-meta-label">Opposite Party:</span>
+                <span class="case-meta-value">${this.escape(c.opposite_party)}</span>
+              </div>
+              <div class="case-meta-row">
+                <span class="case-meta-label">Filing Date:</span>
+                <span class="case-meta-value">${this.formatDate(c.created_at)}</span>
+              </div>
+            </div>
+
+            ${c.description ? `<p class="case-desc" style="-webkit-line-clamp: unset; max-height: none; margin-bottom: var(--space-4);">${this.escape(c.description)}</p>` : ''}
+
+            <div class="portal-hearings-box">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <strong style="font-size: 0.88rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                  <svg class="icon" style="width: 15px; height: 15px;" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Hearing Diary &amp; Orders (${hearingsForThisCase.length})
+                </strong>
+              </div>
+              ${hearingsListHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    container.innerHTML = `
+      <!-- Client Profile Banner -->
+      <div class="portal-client-header">
+        <div class="portal-client-profile">
+          <div class="portal-client-avatar">${this.getInitials(client.name)}</div>
+          <div>
+            <div class="portal-client-name">${this.escape(client.name)}</div>
+            <div class="portal-client-meta">
+              <span><strong>ID:</strong> #${client.id}</span>
+              ${client.phone ? `<span><strong>Phone:</strong> ${this.escape(client.phone)}</span>` : ''}
+              ${client.email ? `<span><strong>Email:</strong> ${this.escape(client.email)}</span>` : ''}
+              ${client.address ? `<span><strong>Address:</strong> ${this.escape(client.address)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: var(--space-2); align-items: center;">
+          <button class="btn btn-secondary btn-sm" onclick="AppState.setView('dashboard')" title="Return to Practice Management Dashboard">
+            Advocate Workspace
+          </button>
+          <button class="btn btn-ghost btn-sm" id="portalSignOutBtn" onclick="UI.signOutPortalClient()" style="color: var(--feedback-danger);">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Client Metrics -->
+      <div class="dashboard-kpi-grid" style="margin-bottom: var(--space-6);">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper active-cases">
+            <svg class="icon" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-value">${clientCases.length}</span>
+            <span class="kpi-label">Total Assigned Matters</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper clients">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-value">${activeCases.length}</span>
+            <span class="kpi-label">Active Court Cases</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrapper hearings">
+            <svg class="icon" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="kpi-data">
+            <span class="kpi-value" style="font-size: 1.15rem;">${nextHearing ? this.formatDate(nextHearing.hearing_date) : 'None'}</span>
+            <span class="kpi-label">${nextHearing ? `Next Hearing (${this.escape(nextHearing.stage)})` : 'Upcoming Court Date'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Matters List -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4);">
+        <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary);">Your Court Matters &amp; Hearings</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">${clientCases.length} Matter(s)</span>
+      </div>
+
+      <div class="portal-cases-container">
+        ${casesHtml}
+      </div>
+    `;
   },
 };
 
