@@ -23,6 +23,29 @@ def create_client(
     return new_client
 
 
+@router.get("/portal/lookup", response_model=client_schemas.ClientRead)
+def lookup_client_for_portal(identifier: str, db: Session = Depends(get_db)):
+    """Lookup client by numeric ID or registered phone number for client portal access."""
+    clean_id = identifier.strip()
+    db_client = None
+
+    # Check by numeric ID first if identifier is digits
+    if clean_id.isdigit():
+        db_client = client_crud.get_client_by_id(db=db, client_id=int(clean_id))
+
+    # If not found by ID or identifier contains non-digits, search by phone
+    if not db_client:
+        db_client = client_crud.get_client_by_phone(db=db, phone=clean_id)
+
+    if not db_client:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No client found with ID or phone number: '{identifier}'",
+        )
+
+    return db_client
+
+
 @router.get("/{client_id}", response_model=client_schemas.ClientRead)
 def get_client(client_id: int, db: Session = Depends(get_db)):
     """Fetch a specific client by their ID."""
