@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Client Matter Portal',
       subtitle: 'Self-service client access to active cases, proceedings, orders, and hearings',
     },
+    auth: {
+      title: 'Advocate Diary System',
+      subtitle: 'Executive legal practice management and client matter portal',
+    },
   };
 
   // 3. Register State Change Subscribers
@@ -52,6 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'portal_client_updated':
         if (AppState.data.currentView === 'portal') UI.renderPortal();
         break;
+      case 'advocate_updated':
+        UI.updateAdvocateProfileInSidebar();
+        break;
+      case 'auth_mode_changed':
+      case 'auth_role_changed':
+        if (AppState.data.currentView === 'auth') UI.renderAuth();
+        break;
       case 'view_change':
         switchViewUI(payload);
         break;
@@ -62,6 +73,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function switchViewUI(viewName) {
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer) {
+      appContainer.classList.toggle('auth-mode', viewName === 'auth');
+    }
+
+    if (viewName === 'auth') {
+      UI.renderAuth();
+    } else {
+      UI.updateAdvocateProfileInSidebar();
+    }
+
     // Update navigation sidebar
     document.querySelectorAll('.nav-item').forEach((item) => {
       item.classList.toggle('active', item.dataset.view === viewName);
@@ -80,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pageSubtitle) pageSubtitle.textContent = meta.subtitle;
 
     // Render corresponding view
+    if (viewName === 'auth') UI.renderAuth();
     if (viewName === 'dashboard') UI.renderDashboard();
     if (viewName === 'clients') UI.renderClients();
     if (viewName === 'cases') UI.renderCases();
@@ -616,13 +639,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- CLIENT PORTAL LOGIN FORM ---
+  // --- AUTHENTICATION & PORTAL HANDLERS ---
   document.addEventListener('submit', async (e) => {
-    if (e.target && e.target.id === 'portalLoginForm') {
+    // 1. Advocate Login
+    if (e.target && e.target.id === 'advocateLoginForm') {
       e.preventDefault();
-      const input = document.getElementById('portalIdentifierInput');
-      const errorBox = document.getElementById('portalLoginError');
-      const submitBtn = document.getElementById('portalSubmitBtn');
+      const identifier = document.getElementById('advocateLoginIdentifier').value.trim();
+      const password = document.getElementById('advocateLoginPassword').value;
+      const errorBox = document.getElementById('advocateLoginError');
+      const submitBtn = document.getElementById('advocateLoginSubmitBtn');
+
+      if (errorBox) errorBox.style.display = 'none';
+      setButtonLoading(submitBtn, true, 'Signing in...');
+
+      try {
+        const res = await API.advocateLogin(identifier, password);
+        AppState.setAdvocate(res.advocate);
+        UI.showToast(`Welcome back, ${res.advocate.name}!`, 'success');
+        AppState.setView('dashboard');
+      } catch (err) {
+        if (errorBox) {
+          errorBox.textContent = err.message || 'Invalid credentials.';
+          errorBox.style.display = 'block';
+        } else {
+          UI.showToast(err.message, 'error');
+        }
+      } finally {
+        setButtonLoading(submitBtn, false, 'Sign In to Advocate Practice →');
+      }
+    }
+
+    // 2. Client Login
+    if (e.target && (e.target.id === 'clientPortalLoginForm' || e.target.id === 'portalLoginForm')) {
+      e.preventDefault();
+      const input = document.getElementById('clientLoginIdentifier') || document.getElementById('portalIdentifierInput');
+      const errorBox = document.getElementById('clientLoginError') || document.getElementById('portalLoginError');
+      const submitBtn = document.getElementById('clientLoginSubmitBtn') || document.getElementById('portalSubmitBtn');
       if (!input) return;
 
       const identifier = input.value.trim();
@@ -635,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const client = await API.lookupClient(identifier);
         AppState.setPortalClient(client);
         UI.showToast(`Welcome to your case portal, ${client.name}!`, 'success');
-        UI.renderPortal();
+        AppState.setView('portal');
       } catch (err) {
         if (errorBox) {
           errorBox.textContent = err.message || 'Client account not found. Please verify your ID or phone number.';
@@ -644,11 +696,98 @@ document.addEventListener('DOMContentLoaded', () => {
           UI.showToast(err.message, 'error');
         }
       } finally {
-        setButtonLoading(submitBtn, false, 'Access My Case Portal →');
+        setButtonLoading(submitBtn, false, 'Access My Matter Portal →');
+      }
+    }
+
+    // 3. Advocate Sign Up
+    if (e.target && e.target.id === 'advocateSignupForm') {
+      e.preventDefault();
+      const errorBox = document.getElementById('advocateSignupError');
+      const submitBtn = document.getElementById('advocateSignupSubmitBtn');
+      if (errorBox) errorBox.style.display = 'none';
+
+      const payload = {
+        name: document.getElementById('advocateSignupName').value.trim(),
+        enrollment_number: document.getElementById('advocateSignupEnrollment').value.trim(),
+        phone: document.getElementById('advocateSignupPhone').value.trim(),
+        email: document.getElementById('advocateSignupEmail').value.trim(),
+        chamber_address: document.getElementById('advocateSignupAddress').value.trim(),
+        password: document.getElementById('advocateSignupPassword').value,
+      };
+
+      setButtonLoading(submitBtn, true, 'Registering...');
+
+      try {
+        const newAdvocate = await API.advocateSignup(payload);
+        AppState.setAdvocate(newAdvocate);
+        UI.showToast(`Welcome, ${newAdvocate.name}! Your practice account has been registered.`, 'success');
+        AppState.setView('dashboard');
+      } catch (err) {
+        if (errorBox) {
+          errorBox.textContent = err.message || 'Registration failed.';
+          errorBox.style.display = 'block';
+        } else {
+          UI.showToast(err.message, 'error');
+        }
+      } finally {
+        setButtonLoading(submitBtn, false, 'Complete Advocate Registration →');
+      }
+    }
+
+    // 4. Client Sign Up
+    if (e.target && e.target.id === 'clientSignupForm') {
+      e.preventDefault();
+      const errorBox = document.getElementById('clientSignupError');
+      const submitBtn = document.getElementById('clientSignupSubmitBtn');
+      if (errorBox) errorBox.style.display = 'none';
+
+      const payload = {
+        name: document.getElementById('clientSignupName').value.trim(),
+        phone: document.getElementById('clientSignupPhone').value.trim() || null,
+        email: document.getElementById('clientSignupEmail').value.trim() || null,
+        address: document.getElementById('clientSignupAddress').value.trim(),
+      };
+
+      setButtonLoading(submitBtn, true, 'Creating Account...');
+
+      try {
+        const newClient = await API.clientSignup(payload);
+        AppState.addClient(newClient);
+        AppState.setPortalClient(newClient);
+        UI.showToast(`Account created! Your Client ID is #${newClient.id}.`, 'success');
+        AppState.setView('portal');
+      } catch (err) {
+        if (errorBox) {
+          errorBox.textContent = err.message || 'Client registration failed.';
+          errorBox.style.display = 'block';
+        } else {
+          UI.showToast(err.message, 'error');
+        }
+      } finally {
+        setButtonLoading(submitBtn, false, 'Register as Client →');
       }
     }
   });
 
+  // Sidebar Logout Button
+  const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+  if (sidebarLogoutBtn) {
+    sidebarLogoutBtn.addEventListener('click', () => {
+      AppState.logout();
+      UI.showToast('Signed out of advocate session.', 'info');
+    });
+  }
+
   // 10. Start the App!
   loadInitialData();
+
+  // Initial View Determination: show login screen if not authenticated!
+  if (AppState.data.currentAdvocate) {
+    AppState.setView('dashboard');
+  } else if (AppState.data.portalClient) {
+    AppState.setView('portal');
+  } else {
+    AppState.setView('auth');
+  }
 });
