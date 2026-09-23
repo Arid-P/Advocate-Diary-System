@@ -10,6 +10,13 @@ const AppState = {
     hearings: [],
     currentView: 'dashboard',
     theme: localStorage.getItem('advocate_theme') || 'dark',
+    portalClient: (() => {
+      try {
+        return JSON.parse(sessionStorage.getItem('advocate_portal_client')) || null;
+      } catch {
+        return null;
+      }
+    })(),
     filters: {
       clientSearch: '',
       caseStatus: 'all',
@@ -60,10 +67,35 @@ const AppState = {
      View Navigation
      -------------------------------------------------------------------------- */
   setView(viewName) {
-    if (['dashboard', 'clients', 'cases', 'hearings'].includes(viewName)) {
+    if (['dashboard', 'clients', 'cases', 'hearings', 'portal'].includes(viewName)) {
       this.data.currentView = viewName;
       this.notify('view_change', viewName);
     }
+  },
+
+  /* --------------------------------------------------------------------------
+     Portal Client Access
+     -------------------------------------------------------------------------- */
+  setPortalClient(client) {
+    this.data.portalClient = client;
+    try {
+      if (client) {
+        sessionStorage.setItem('advocate_portal_client', JSON.stringify(client));
+      } else {
+        sessionStorage.removeItem('advocate_portal_client');
+      }
+    } catch (e) {
+      console.warn('Could not persist portal client in sessionStorage', e);
+    }
+    this.notify('portal_client_updated', client);
+  },
+
+  clearPortalClient() {
+    this.setPortalClient(null);
+  },
+
+  getPortalClient() {
+    return this.data.portalClient;
   },
 
   /* --------------------------------------------------------------------------
@@ -83,11 +115,17 @@ const AppState = {
     this.data.clients = this.data.clients.map((c) =>
       c.id === updatedClient.id ? updatedClient : c
     );
+    if (this.data.portalClient && this.data.portalClient.id === updatedClient.id) {
+      this.setPortalClient(updatedClient);
+    }
     this.notify('clients_updated', this.data.clients);
   },
 
   removeClient(clientId) {
     this.data.clients = this.data.clients.filter((c) => c.id !== clientId);
+    if (this.data.portalClient && this.data.portalClient.id === clientId) {
+      this.clearPortalClient();
+    }
     // Cascade delete cases and hearings associated with this client in memory
     const removedCaseIds = this.data.cases
       .filter((c) => c.client_id === clientId)
