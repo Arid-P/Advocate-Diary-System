@@ -58,6 +58,13 @@
           <span>Court Diary</span>
           <span class="nav-counter" id="navHearingCount">0</span>
         </div>
+
+        <div class="nav-section-label" style="margin-top: 1.25rem;">Client Access</div>
+
+        <div class="nav-item" data-view="portal" id="nav-portal">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>Client Portal</span>
+        </div>
       </nav>
 
       <div class="sidebar-footer">
@@ -104,6 +111,12 @@
             <input type="text" class="search-input" id="globalSearchInput" placeholder="Search across diary...">
             <span class="search-shortcut">⌘K</span>
           </div>
+
+          <!-- Client Portal Quick Switcher -->
+          <button class="btn btn-secondary btn-sm" id="portalHeaderBtn" onclick="AppState.setView('portal')" style="gap: 6px;" title="Switch to Client Portal">
+            <svg class="icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Client Portal</span>
+          </button>
 
           <!-- Quick Create Dropdown -->
           <div class="dropdown" id="quickCreateDropdown">
@@ -403,6 +416,13 @@
               Schedule Hearing Date
             </button>
           </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 5: CLIENT MATTERS PORTAL
+             ================================================================== -->
+        <section class="view-section" id="view-portal">
+          <div id="portalContainer"></div>
         </section>
 
       </div>
