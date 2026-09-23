@@ -88,6 +88,30 @@ const API = {
   },
 
   /* --------------------------------------------------------------------------
+     Authentication Endpoints
+     -------------------------------------------------------------------------- */
+  async advocateSignup(advocateData) {
+    return this.request('/auth/advocate/signup', {
+      method: 'POST',
+      body: advocateData,
+    });
+  },
+
+  async advocateLogin(identifier, password) {
+    return this.request('/auth/advocate/login', {
+      method: 'POST',
+      body: { identifier, password },
+    });
+  },
+
+  async clientSignup(clientData) {
+    return this.request('/auth/client/signup', {
+      method: 'POST',
+      body: clientData,
+    });
+  },
+
+  /* --------------------------------------------------------------------------
      Clients Endpoints
      -------------------------------------------------------------------------- */
   async getClients(skip = 0, limit = 100) {
